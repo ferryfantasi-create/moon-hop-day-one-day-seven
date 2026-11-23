@@ -8,7 +8,7 @@
 // MAKEFUN_OUTPUT_DIR stand in for /bot and /output:
 //   mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const BOT_DIR = process.env.MAKEFUN_BOT_DIR ?? '/bot';
@@ -21,3 +21,12 @@ try {
   console.error(`VIDEO.json could not be copied from ${BOT_DIR}: ${(err as Error).message}`);
   process.exit(1);
 }
+
+// Check the copy before handing it over: it must name a TikTok video
+// address, or the gate would be handed a broken link.
+const copied = JSON.parse(readFileSync(join(OUTPUT_DIR, 'VIDEO.json'), 'utf8')) as { url?: unknown };
+if (typeof copied.url !== 'string' || !copied.url.startsWith('https://www.tiktok.com/')) {
+  console.error('VIDEO.json does not name a TikTok video address');
+  process.exit(1);
+}
+console.log(`VIDEO.json copied: ${copied.url}`);
